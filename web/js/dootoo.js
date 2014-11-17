@@ -43,7 +43,10 @@ function login() {
 	}).done(function(data) {
 		if (data._embedded != null && data._embedded.users.length > 0) {
 			var user = data._embedded.users[0];
-			$('#login_nav').html('<li class="navbar-text">Hi, ' + user.firstName + '!</li><li><a href="/web" class="navbar-link">logout</a></li>');
+			var html = '<li class="navbar-text">';
+			html += user.profileImg == null ? '<span class="glyphicon glyphicon-user"></span>' : '<img src = "' + user.proflieImg + '>';
+			html += ' Hi, ' + user.firstName + '!</li><li><a href="/web" class="navbar-link">logout</a></li>'
+			$('#login_nav').html(html);
 		} else {
 			alert('Could not login!');
 		}
@@ -101,10 +104,13 @@ function change_zip() {
 function filter_happenings() {
 	// TODO: keep the existing tags?
 	var what = document.getElementById('tags').value;
-	tags = what.replace(', ',' ').replace(',',' ').split(' ');
-	if (what == null || what == '') {
+	var newTags = []
+	if (what != '') {
+		newTags = what.replace(', ',' ').replace(',',' ').split(' ');
+	} else if (tags.length == 0) {
 		return false;
 	}
+	tags = newTags.length > 0 ? $.merge(tags, what.replace(', ',' ').replace(',',' ').split(' ')) : tags;
 	var latlng = map.getCenter();
 	var lat = latlng.lat();
 	var lng = latlng.lng();
@@ -145,8 +151,14 @@ function pop_pills(tags) {
 	$('#tag_pills').html('');
 	tags.forEach(function (tag) {
 		//TODO: add onclick to the 'x'
-		var html = '<div class="btn-group btn-group-xs" role="group"><button class="btn btn-primary btn-xs disabled" type="button">' + tag + '</button>';
-		html += '<button class="btn btn-primary btn-xs" type="button"><span aria-hidden="true">&times;</button></div> ';
+		var html = '<div id="' + tag + '-group" class="btn-group btn-group-xs" role="group"><button class="btn btn-primary btn-xs disabled" type="button">' + tag + '</button>';
+		html += '<button id="' + tag + '" class="btn btn-primary btn-xs" type="button" onclick="remove_pill(this)"><span aria-hidden="true">&times;</button></div> ';
 		$('#tag_pills').append(html);
 	});
+}
+
+function remove_pill(tag) {
+	tags.splice(tags.indexOf(tag.id),1);
+	$('#' + tag.id + '-group').remove();
+	filter_happenings();
 }
